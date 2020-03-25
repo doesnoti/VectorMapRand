@@ -1,0 +1,3 @@
+﻿  VectorMapRand.cpp
+C:\Programs\VS\Programs\VectorMapRand\VectorMapRand\VectorMapRand.cpp(73,15): warning C4244: аргумент: преобразование "time_t" в "unsigned int", возможна потеря данных
+  VectorMapRand.vcxproj -> C:\Programs\VS\Programs\VectorMapRand\Debug\VectorMapRand.exe
