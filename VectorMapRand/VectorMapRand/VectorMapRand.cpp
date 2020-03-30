@@ -1,12 +1,21 @@
 ﻿/*
 Личный комментарий
-*Недавно узнал, что помимо того, чтобы программа работала корректно, необходимо,
-*чтобы у тебя был определённый стиль программирования/комментирования. Я изучал
-*этот момент, но вариаций стилей встречал несколько. Какой именно необходим - не знаю.
-*Данную программу оформлял так, как привык. Если это не соответствует вашим требованиям,
-*то освоить иной стиль программирования не будет проблемой.
-*Как написано у меня в резюме: "Могу не иметь каких-то навыков, но способен овладеть
-*ими в кратчайшие сроки".
+*-"нет C++11 и выше" - в первоначальной версии использовались: шаблонная функция, цикл foreach и ключевое слово auto,
+*что, как я понял, относится к C++11. Если имелось ввиду именно использование rand() - поправил этот момент.
+*
+*-"создаются лишние элементы в map" - не до конца понятный мне комментарий. Как я понял, мне необходимо было
+*заполнять случайными числами ключи контейнера map. Изначально меня смутило "ограничение удаляемых элементов - не более 15".
+*Ведь если их больше или равно 9, то map уже останется пустым. Если требовалось, всё таки, заполнять значения,
+*то мне не понятен комментарий про лишние элементы map. Я попытался уточнить этот вопрос, но не получил ответа.
+*
+*-Был комментарий про линейную сложность и использование алгоритмов STL. Если мы заполняем значения map и подразумевалось
+*использование функции find/find_if, то задача и так будет иметь квадратичную сложность, только придётся с её помощью
+*прогонять два контейнера. А сортировку для vector не использовал, потому что в этом не было необходимости (значения
+map шли вразнобой).
+*
+*В общем, много моментов, которые мне не до конца ясны, и если бы была возможность их уточнить - всё сделал бы, как необходимо.
+*Сама по себе формулировка задания может иметь несколько интерпритаций. Надеюсь отклонение моей реализации от того,что
+*было вами задумано, не будет показателем моих навыков.
 */
 
 /*
@@ -16,9 +25,10 @@
 */
 
 #include <iostream>
-#include <ctime>
 #include <vector>
 #include <map>
+#include <random>
+#include <algorithm>
 
 using namespace std;
 
@@ -44,7 +54,7 @@ void PrintMap(map<T, T> &contMap)
 
     for (const auto& element : contMap)
     {
-        cout << element.second << " ";
+        cout << element.first << " ";
     }
 
     cout << endl;
@@ -67,61 +77,128 @@ int main()
 
     map <int, int> randMap;
     vector <int> randVector;
+    randVector.reserve(i);
 
-    srand(time(NULL));
+    mt19937_64 rand{ random_device{}() };
+    uniform_int_distribution<int> range(1, 9);
 
     for (int j = 0; j < i; j++)
     {
-        randMap.emplace(j, rand() % 9 + 1);
-        randVector.push_back(rand() % 9 + 1);
+        randMap.emplace(range(rand), i);
+        randVector.push_back(range(rand));
     }
 
     PrintMap(randMap);
     PrintVector(randVector);
 
-    int numItemToDel = rand() % 16;
+    uniform_int_distribution<int> rangeDel(0, 15);
+
+    int numItemToDel = rangeDel(rand);
 
     cout << endl << "Кол-во удаляемых элементов: " << numItemToDel << endl;
+
+    if (numItemToDel >= randMap.size())       //Если кол-во удаляемых элементов больше или равно размеру map
+    {
+        for (int j = 0; j < numItemToDel; j++)
+        {
+            randVector.pop_back();
+        }
+
+        randMap.clear();
+
+        cout << endl << "После удаления:" << endl;
+
+        PrintMap(randMap);
+        PrintVector(randVector);
+
+        randVector.clear();
+
+        cout << endl << "После синхронизации:" << endl;
+
+        PrintMap(randMap);
+        PrintVector(randVector);
+
+        return 0;
+    }
 
     for (int j = 0; j < numItemToDel; j++)
     {
         randVector.pop_back();
-        randMap.erase(randMap.size() - 1);
+        randMap.erase(--end(randMap));
     }
+
+    sort(begin(randVector), end(randVector));
 
     cout << endl << "После удаления:" << endl;
 
     PrintMap(randMap);
     PrintVector(randVector);
 
-    int size = randVector.size();
-    vector <bool> fMap(size, false), fVector(size, false);  //Создаю вектора флагов, которые будут говорить какие элементы не встречаются
-
-    for (int j = 0; j < size; j++)
+    auto mapsElement = begin(randMap);
+    vector <bool> fMap(randMap.size(), false), fVector(randVector.size(), false);   //Отслеживают какие элементы удалить
+    int jVector = 0, jMap = 0;
+    vector <int> keyMapToDel;
+    
+    for (const auto& vectorsElement : randVector)
     {
-        for (int k = 0; k < size; k++)
+        if (vectorsElement >= mapsElement->first)
         {
-            if (randVector[j] == randMap[k])
+            if (vectorsElement == mapsElement->first)
             {
-                fVector[j] = true;
-                fMap[k] = true;
+                fMap[jMap] = true;
+                fVector[jVector] = true;
+            }
+            else if (mapsElement != --end(randMap))
+            {
+                ++mapsElement;
+                ++jMap;
+
+                if (vectorsElement > mapsElement->first)
+                {
+                    while ((vectorsElement > mapsElement->first) && (mapsElement != --end(randMap)) )
+                    {
+                        ++mapsElement;
+                        ++jMap;
+                    }
+                }
+
+                if (vectorsElement == mapsElement->first)
+                {
+                    fMap[jMap] = true;
+                    fVector[jVector] = true;
+                }
             }
         }
+
+        ++jVector;
     }
 
     int count = 0;
 
-    for (int j = 0; j < size; j++)
+    for (const auto& element : randMap)
+    {
+        if (!fMap[count])
+        {
+            keyMapToDel.push_back(element.first);
+        }
+        ++count;
+    }
+
+    const int VECTORSIZE = randVector.size();
+
+    for (const auto& toDel : keyMapToDel)
+    {
+        randMap.erase(toDel);
+    }
+
+    count = 0;
+
+    for (int j = 0; j < VECTORSIZE; j++)
     {
         if (!fVector[j])
         {
-            randVector.erase(randVector.begin() + (j - count)); //Должны учитывать, что следующие элементы смещаются при удалении
+            randVector.erase(randVector.begin() + (j - count));     //Должны учитывать, что следующие элементы смещаются при удалении
             ++count;
-        }
-
-        if (!fMap[j])
-        {
-            randMap.erase(j);
         }
     }
 
@@ -129,4 +206,6 @@ int main()
 
     PrintMap(randMap);
     PrintVector(randVector);
+
+    return 0;
 }
