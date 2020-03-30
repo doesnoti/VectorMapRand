@@ -150,6 +150,10 @@ int main()
             }
             else if (mapsElement != --end(randMap))
             {
+                if (!fMap[jMap])
+                {
+                    keyMapToDel.push_back(mapsElement->first);
+                }
                 ++mapsElement;
                 ++jMap;
 
@@ -157,6 +161,10 @@ int main()
                 {
                     while ((vectorsElement > mapsElement->first) && (mapsElement != --end(randMap)) )
                     {
+                        if (!fMap[jMap])
+                        {
+                            keyMapToDel.push_back(mapsElement->first);
+                        }
                         ++mapsElement;
                         ++jMap;
                     }
@@ -173,15 +181,14 @@ int main()
         ++jVector;
     }
 
-    int count = 0;
-
-    for (const auto& element : randMap)
+    while (mapsElement != end(randMap))
     {
-        if (!fMap[count])
+        if (!fMap[jMap])
         {
-            keyMapToDel.push_back(element.first);
+            keyMapToDel.push_back(mapsElement->first);
         }
-        ++count;
+        ++mapsElement;
+        ++jMap;
     }
 
     const int VECTORSIZE = randVector.size();
@@ -191,7 +198,7 @@ int main()
         randMap.erase(toDel);
     }
 
-    count = 0;
+    int count = 0;
 
     for (int j = 0; j < VECTORSIZE; j++)
     {
